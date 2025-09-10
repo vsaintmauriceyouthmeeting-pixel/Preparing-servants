@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إدارة الرحلات</title>
+
+  <!-- Tailwind + Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Firebase (Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+    :root {
+      --color1: rgb(250, 238, 180);
+      --color2: rgb(212, 46, 35);
+      --color3: rgb(34, 42, 59);
+      --color4: rgb(170, 123, 76);
+      --color5: rgb(253, 244, 204);
+      --color6: rgb(255, 255, 255);
+    }
+    body { font-family:'Tajawal',sans-serif; background:var(--color6); color:var(--color3); font-size:18px; margin:0; }
+    header { background:var(--color5); padding:10px; box-shadow:0 4px 12px rgba(0,0,0,.1); position:sticky; top:0; z-index:1000; }
+    .header-container{ display:flex; justify-content:space-between; align-items:center; flex-direction:row-reverse; max-width:1200px; margin:auto; }
+    .header-container img{ width:300px; height:90px; border-radius:50%; object-fit:cover; box-shadow:0 4px 8px rgba(0,0,0,.2); }
+    .header-text{ font-size:28px; font-weight:bold; color:var(--color4); }
+    nav.navbar{ margin:20px auto; background:var(--color5); padding:10px; border-radius:8px; max-width:1200px; display:flex; justify-content:space-between; align-items:center; }
+    nav.navbar .links{ display:flex; gap:20px; }
+    nav.navbar a{ text-decoration:none; color:var(--color3); font-weight:600; }
+    nav.navbar a:hover{ color:var(--color2); }
+    .logout{ background:#dc2626 !important; color:#fff !important; padding:6px 14px; border-radius:8px; }
+    .logout:hover{ background:#991b1b !important; }
+
+    .btn-primary,.btn-secondary{
+      background:var(--color4); color:var(--color6); border:none; padding:8px 16px;
+      font-size:16px; font-weight:700; border-radius:12px; cursor:pointer; transition:.3s;
+      box-shadow:0 4px 8px rgb(170,123,76);
+    }
+    .btn-primary:hover,.btn-secondary:hover{ background:rgb(150,100,60); }
+    .btn-danger { background: var(--color2); color:white; padding:6px 12px; border-radius:8px; font-size:14px; }
+    .btn-warning { background: orange; color:white; padding:6px 12px; border-radius:8px; font-size:14px; }
+
+    .container{ max-width:1200px; margin:30px auto; padding:20px; }
+    .input,textarea,select{ width:100%; border:1px solid #ccc; border-radius:8px; padding:10px; font-size:16px; margin:8px 0; }
+    table{ width:100%; border-collapse:collapse; margin-top:20px; }
+    table,th,td{ border:1px solid #ccc; text-align:center; padding:8px; }
+    th{ background:var(--color5); }
+    #notification{ transition:.3s; }
+
+    @media (max-width: 768px) {
+      .header-container, .content-flex, nav.navbar { max-width:95%; margin:auto; }
+      .grid-cols-3 { grid-template-columns: 1fr !important; }
+    }
+  </style>
+</head>
+<body>
+  <!-- الهيدر -->
+  <header>
+    <div class="header-container">
+      <div class="header-text">نظام تسجيل الرحلات</div>
+      <img src="logo.png" alt="Logo">
+      <div class="header-text">أجتماع أعداد خدام</div>
+    </div>
+  </header>
+
+  <!-- شريط التنقل -->
+  <nav class="navbar">
+    <div class="links">
+      <a href="home_teacher.html">الرئيسية</a>
+        <a href="ascenqrcode.html">مسح كود الحضور</a>
+        <a href="crpoems.html">المسابقات</a>
+        <a href="program.html">برنامج اليوم</a>
+        <a href="trip.html">إدارة الرحلات</a>
+        <a href="fsaying.html"> المبادرات</a>
+        <a href="dataview.html">بيانات المخدومين</a>
+    </div>
+    <a href="index.html" class="logout">تسجيل الخروج</a>
+  </nav>
+
+  <div class="container">
+    <!-- شريط علوي: تبويب + إعداد النقاط -->
+    <div class="flex flex-col gap-3 mb-5">
+      <div class="flex gap-3 flex-wrap">
+        <button id="newTripTab" class="btn-primary"><i class="fas fa-plus-circle"></i> رحلة جديدة</button>
+        <button id="existingTripTab" class="btn-secondary"><i class="fas fa-users"></i> تسجيل حضور</button>
+      </div>
+
+      <div class="flex items-center gap-3 bg-[var(--color5)] p-3 rounded-lg">
+        <div class="font-bold">قيمة النقطة الحالية: <span id="pointValueLabel">—</span> جنيه</div>
+        <button id="editPointValueBtn" class="btn-warning"><i class="fas fa-pen"></i> تعديل قيمة النقطة</button>
+      </div>
+    </div>
+
+    <!-- فورم إنشاء رحلة جديدة -->
+    <div id="newTripForm">
+      <h2>إنشاء رحلة جديدة</h2>
+      <div class="grid grid-cols-3 gap-4">
+        <div><input id="tripName" class="input" type="text" placeholder="اسم الرحلة"></div>
+        <div><input id="tripDate" class="input" type="date"></div>
+        <div><input id="tripTime" class="input" type="time"></div>
+      </div>
+      <div class="grid grid-cols-3 gap-4">
+        <div><input id="tripPrice" class="input" type="number" placeholder="السعر الأساسي للفرد (جنيه)"></div>
+        <div class="col-span-2"><textarea id="tripDescription" class="input" placeholder="تفاصيل الرحلة..."></textarea></div>
+      </div>
+      <label class="mt-2 block">هل سيركب الأتوبيس؟</label>
+      <div class="flex items-center gap-4">
+        <label><input type="radio" id="busYes" name="bus" value="نعم"> نعم</label>
+        <label><input type="radio" id="busNo" name="bus" value="لا" checked> لا</label>
+      </div>
+      <button id="saveNewTrip" class="btn-primary mt-3"><i class="fas fa-save"></i> حفظ الرحلة الجديدة</button>
+    </div>
+
+    <!-- فورم تسجيل حضور -->
+    <div id="existingTripForm" class="hidden">
+      <h2>تسجيل حضور لرحلة موجودة</h2>
+      <select id="selectTrip" class="input">
+        <option value="">-- اختر رحلة --</option>
+      </select>
+
+      <div id="tripDetails" class="hidden mt-4">
+        <h3>تفاصيل الرحلة</h3>
+        <p><b>التاريخ:</b> <span id="detailsDate"></span></p>
+        <p><b>الوقت:</b> <span id="detailsTime"></span></p>
+        <p><b>السعر الأساسي للفرد:</b> <span id="detailsPrice"></span></p>
+        <p><b>عدد المسجلين:</b> <span id="attendeeCount">0</span></p>
+        <p><b>إجمالي المدفوع:</b> <span id="totalPaid">0</span></p>
+        <button class="btn-danger" id="deleteTripBtn"><i class="fas fa-trash"></i> حذف الرحلة</button>
+      </div>
+
+      <h3 class="mt-6">قائمة المسجلين</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>اسم الرحلة</th>
+            <th>اسم المخدوم</th>
+            <th>الإيميل</th>
+            <th>النقاط المستخدمة</th>
+            <th>قيمة النقطة (ج)</th>
+            <th>السعر الأساسي (ج)</th>
+            <th>الخصم (ج)</th>
+            <th>السعر بعد الخصم (ج)</th>
+            <th>المبلغ المدفوع (ج)</th>
+            <th>المتبقي (ج)</th>
+            <th>ركوب الأتوبيس</th>
+            <th>الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="attendeeTableBody"></tbody>
+      </table>
+
+      <h3 class="mt-6">إضافة مخدوم جديد</h3>
+      <div class="grid grid-cols-3 gap-4">
+        <div><input id="attendeeName" class="input" type="text" placeholder="اسم المخدوم"></div>
+
+        <!-- اشعار / نافذة الابلاغ -->
+        <div id="notification" class="fixed top-4 right-4 p-4 rounded-lg shadow-lg hidden"></div>
+
+        <div class="form-group">
+          <label for="email">اختر الإيميل</label>
+          <select id="email" class="form-control" required>
+            <option value="">اختر الإيميل من القائمة</option>
+          </select>
+        </div>
+
+        <div><input id="attendeeAmount" class="input" type="number" placeholder="المبلغ المدفوع (ج)"></div>
+      </div>
+
+      <label class="mt-2 block">هل سيركب الأتوبيس؟</label>
+      <div class="flex items-center gap-4">
+        <label><input type="radio" id="attendeeBusYes" name="attendeeBus" value="نعم"> نعم</label>
+        <label><input type="radio" id="attendeeBusNo" name="attendeeBus" value="لا" checked> لا</label>
+      </div>
+      <button id="saveAttendee" class="btn-primary mt-3"><i class="fas fa-user-plus"></i> تسجيل المخدوم</button>
+    </div>
+  </div>
+
+  <script>
+    // ========== Firebase ==========
+    const firebaseConfig = {
+      apiKey: "AIzaSyDWLO50vU1fsjBBCnSHFdTbDAPEIlopkSo",
+  authDomain: "preparsystemapp.firebaseapp.com",
+  projectId: "preparsystemapp",
+  storageBucket: "preparsystemapp.firebasestorage.app",
+  messagingSenderId: "740305406109",
+  appId: "1:740305406109:web:0dce232a4fcde8667aac74",
+  measurementId: "G-J0YPS1RLE5"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // ========== عناصر DOM ==========
+    const newTripTab = document.getElementById("newTripTab");
+    const existingTripTab = document.getElementById("existingTripTab");
+    const newTripForm = document.getElementById("newTripForm");
+    const existingTripForm = document.getElementById("existingTripForm");
+
+    const saveNewTrip = document.getElementById("saveNewTrip");
+    const saveAttendee = document.getElementById("saveAttendee");
+    const selectTrip = document.getElementById("selectTrip");
+    const attendeeTableBody = document.getElementById("attendeeTableBody");
+    const notification = document.getElementById("notification");
+    const attendeeCountEl = document.getElementById("attendeeCount");
+    const totalPaidEl = document.getElementById("totalPaid");
+    const deleteTripBtn = document.getElementById("deleteTripBtn");
+
+    const pointValueLabel = document.getElementById("pointValueLabel");
+    const editPointValueBtn = document.getElementById("editPointValueBtn");
+
+    let currentPointValue = 10; // افتراضي حتى التحميل من قاعدة البيانات
+
+    function showNotification(msg, type="success") {
+      notification.textContent = msg;
+      notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg ${type==="success" ? "bg-green-500 text-white" : "bg-red-500 text-white"}`;
+      notification.classList.remove("hidden");
+      setTimeout(()=> notification.classList.add("hidden"), 3000);
+    }
+
+    // Dropdown الايميلات
+    const emailDropdown = document.getElementById("email");
+
+    // تحميل قائمة العملاء تلقائيًا
+    async function loadClientEmails() {
+      try {
+        const snapshot = await db.collection("users")
+          .where("role", "==", "client")
+          .get();
+
+        emailDropdown.innerHTML = `<option value="">اختر الإيميل من القائمة</option>`;
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          // تأكدنا إن الايميل موجود فعلاً
+          if (data.email) {
+            emailDropdown.innerHTML += `<option value="${data.email}">${data.email} — ${data.name || ""}</option>`;
+          }
+        });
+      } catch (error) {
+        console.error("خطأ أثناء تحميل الإيميلات:", error);
+      }
+    }
+
+    // ========== تحميل/تحديث قيمة النقطة من Firestore ==========
+    async function ensurePointValueDoc() {
+      const ref = db.collection("settings").doc("pointsConfig");
+      const snap = await ref.get();
+      if (!snap.exists) {
+        await ref.set({ pointValue: 10 }); // القيمة الافتراضية أول مرة
+        currentPointValue = 10;
+      } else {
+        const data = snap.data();
+        currentPointValue = Number(data.pointValue || 10);
+      }
+      pointValueLabel.textContent = currentPointValue;
+    }
+
+    async function updatePointValue() {
+      const input = prompt("أدخل قيمة النقطة الجديدة بالجنيه:", currentPointValue);
+      if (input === null) return;
+      const val = Number(input);
+      if (isNaN(val) || val < 0) return showNotification("قيمة غير صحيحة","error");
+      await db.collection("settings").doc("pointsConfig").set({ pointValue: val }, { merge: true });
+      currentPointValue = val;
+      pointValueLabel.textContent = currentPointValue;
+      showNotification("تم تحديث قيمة النقطة");
+      if (selectTrip.value) loadTripDetails(selectTrip.value);
+    }
+
+    editPointValueBtn.addEventListener("click", updatePointValue);
+
+    // ========== تبويب الواجهات ==========
+    newTripTab.addEventListener("click",()=>{
+      newTripForm.classList.remove("hidden");
+      existingTripForm.classList.add("hidden");
+    });
+    existingTripTab.addEventListener("click",()=>{
+      existingTripForm.classList.remove("hidden");
+      newTripForm.classList.add("hidden");
+    });
+
+    // ========== حفظ رحلة جديدة ==========
+    saveNewTrip.addEventListener("click", async ()=>{
+      const name = document.getElementById("tripName").value.trim();
+      const date = document.getElementById("tripDate").value;
+      const time = document.getElementById("tripTime").value;
+      const price = Number(document.getElementById("tripPrice").value);
+      const desc = document.getElementById("tripDescription").value.trim();
+      const bus = document.getElementById("busYes").checked ? "نعم" : "لا";
+
+      if(!name || !date || !price) return showNotification("أدخل البيانات كاملة (اسم/تاريخ/سعر)","error");
+
+      await db.collection("trips").add({
+        name, date, time, price, desc, bus, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      showNotification("تم إضافة الرحلة بنجاح");
+      document.getElementById("tripName").value = "";
+      document.getElementById("tripDate").value = "";
+      document.getElementById("tripTime").value = "";
+      document.getElementById("tripPrice").value = "";
+      document.getElementById("tripDescription").value = "";
+      document.getElementById("busNo").checked = true;
+
+      loadTrips();
+    });
+
+    // ========== تحميل الرحلات في القائمة ==========
+    async function loadTrips(){
+      selectTrip.innerHTML = `<option value="">-- اختر رحلة --</option>`;
+      const snap = await db.collection("trips").orderBy("createdAt","desc").get().catch(async ()=>{
+        return await db.collection("trips").get();
+      });
+      snap.forEach(doc=>{
+        selectTrip.innerHTML += `<option value="${doc.id}">${doc.data().name}</option>`;
+      });
+    }
+
+    // ========== عند اختيار رحلة ==========
+    selectTrip.addEventListener("change", ()=>{ loadTripDetails(selectTrip.value); });
+
+    // ========== تحميل تفاصيل الرحلة وعرض الخصومات ==========
+    async function loadTripDetails(tripId){
+      attendeeTableBody.innerHTML = "";
+      document.getElementById("tripDetails").classList.add("hidden");
+      attendeeCountEl.textContent = "0";
+      totalPaidEl.textContent = "0";
+
+      if(!tripId) return;
+
+      await ensurePointValueDoc();
+
+      const tripDoc = await db.collection("trips").doc(tripId).get();
+      if(!tripDoc.exists) return;
+      const d = tripDoc.data();
+
+      document.getElementById("tripDetails").classList.remove("hidden");
+      document.getElementById("detailsDate").textContent=d.date || "";
+      document.getElementById("detailsTime").textContent=d.time || "";
+      document.getElementById("detailsPrice").textContent=Number(d.price || 0);
+
+      const attendeesSnap = await db.collection("trips").doc(tripId).collection("attendees").get();
+      let count = 0;
+      let totalPaid = 0;
+
+      // لكل مسجّل، نعرض المعلومات؛ نقاط المستخدم محفوظة عند الحجز في pointsAtBooking
+      for (const docSnap of attendeesSnap.docs) {
+        const a = docSnap.data();
+        const basePrice = Number(d.price || 0);
+
+        const usedPoints = Number(a.pointsAtBooking || 0);
+        const pv = Number(currentPointValue || 0);
+        const discount = Math.min(usedPoints * pv, basePrice);
+        const finalPrice = Math.max(basePrice - discount, 0);
+
+        const paid = Number(a.amount || 0);
+        const remaining = Math.max(finalPrice - paid, 0);
+
+        count++;
+        totalPaid += paid;
+
+        attendeeTableBody.innerHTML += `
+          <tr>
+            <td>${d.name || ""}</td>
+            <td>${a.name || ""}</td>
+            <td>${a.email || ""}</td>
+            <td>${usedPoints}</td>
+            <td>${pv}</td>
+            <td>${basePrice}</td>
+            <td>${discount}</td>
+            <td>${finalPrice}</td>
+            <td>${paid}</td>
+            <td>${remaining}</td>
+            <td>${a.bus || "لا"}</td>
+            <td>
+              <button class="btn-warning" onclick="editAttendee('${tripId}','${docSnap.id}','${a.name || ""}','${paid}')"><i class="fas fa-edit"></i></button>
+              <button class="btn-danger" onclick="deleteAttendee('${tripId}','${docSnap.id}')"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>`;
+      }
+
+      attendeeCountEl.textContent = count;
+      totalPaidEl.textContent = totalPaid;
+    }
+
+    // ========== تسجيل مخدوم جديد (مربوط بالإيميل + نقاطه تظهر) ==========
+    saveAttendee.addEventListener("click", async ()=>{
+      const tripId = selectTrip.value;
+      if(!tripId) return showNotification("اختر رحلة أولاً","error");
+
+      const name   = document.getElementById("attendeeName").value.trim();
+      const email  = (document.getElementById("email").value || "").trim().toLowerCase();
+      const amount = Number(document.getElementById("attendeeAmount").value || 0);
+      const bus    = document.getElementById("attendeeBusYes").checked ? "نعم" : "لا";
+
+      if(!name || !email) return showNotification("أدخل الاسم والإيميل من القائمة","error");
+
+      // جلب المستخدم من users حسب الإيميل (role=client فقط)
+      // نستخدم هنا فلتر role ثم نطابق الايميل للحصول على الوثيقة بدقة (أكثر مرونة مع كيس الحروف)
+      const usersSnap = await db.collection("users").where("role","==","client").get();
+
+      let userDoc = null;
+      usersSnap.forEach(doc => {
+        const d = doc.data();
+        if (d.email && d.email.toLowerCase() === email) {
+          userDoc = doc;
+        }
+      });
+
+      if (!userDoc) {
+        return showNotification("المستخدم غير موجود كعميل (client) بهذا الإيميل","error");
+      }
+
+      const userData = userDoc.data();
+      const userPoints = Number(userData.points || 0);
+
+      // حفظ لقطة النقاط وقت التسجيل (بتظهر في الجدول)
+      await db.collection("trips").doc(tripId).collection("attendees").add({
+        name,
+        email,
+        amount,
+        bus,
+        pointsAtBooking: userPoints,
+        pointValueAtBooking: currentPointValue || 10,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      showNotification("تم تسجيل المخدوم بنجاح (النقاط الظاهرة هي النقاط الحالية في users)");
+      // تفريغ الحقول وتحريك العرض
+      document.getElementById("attendeeName").value = "";
+      document.getElementById("email").value = "";
+      document.getElementById("attendeeAmount").value = "";
+      document.getElementById("attendeeBusNo").checked = true;
+
+      loadTripDetails(tripId);
+    });
+
+    // ========== تعديل مبلغ المدفوع ==========
+    async function editAttendee(tripId, attendeeId, oldName, oldAmount){
+      const newAmount = prompt(`تعديل المبلغ المدفوع للمخدوم: ${oldName}`, oldAmount);
+      if(newAmount===null) return;
+      const val = Number(newAmount);
+      if (isNaN(val) || val < 0) return showNotification("قيمة غير صحيحة","error");
+      await db.collection("trips").doc(tripId).collection("attendees").doc(attendeeId).update({amount: val});
+      showNotification("تم تعديل المبلغ بنجاح");
+      loadTripDetails(tripId);
+    }
+    window.editAttendee = editAttendee;
+
+    // ========== حذف المخدوم ==========
+    async function deleteAttendee(tripId, attendeeId){
+      if(!confirm("هل أنت متأكد من حذف هذا المخدوم؟")) return;
+      await db.collection("trips").doc(tripId).collection("attendees").doc(attendeeId).delete();
+      showNotification("تم حذف المخدوم بنجاح");
+      loadTripDetails(tripId);
+    }
+    window.deleteAttendee = deleteAttendee;
+
+    // ========== حذف الرحلة كاملة ==========
+    deleteTripBtn.addEventListener("click", async ()=>{
+      const tripId = selectTrip.value;
+      if(!tripId) return showNotification("اختر رحلة أولاً","error");
+      if(!confirm("هل أنت متأكد من حذف هذه الرحلة وكل المسجلين؟")) return;
+
+      const attendeesSnap = await db.collection("trips").doc(tripId).collection("attendees").get();
+      const batch = db.batch();
+      attendeesSnap.forEach(doc=> batch.delete(doc.ref));
+      await batch.commit();
+
+      await db.collection("trips").doc(tripId).delete();
+      showNotification("تم حذف الرحلة بنجاح");
+      loadTrips();
+      attendeeTableBody.innerHTML = "";
+      document.getElementById("tripDetails").classList.add("hidden");
+    });
+
+    // ========== تهيئة أولية ==========
+    (async function init(){
+      await ensurePointValueDoc();
+      await loadClientEmails();
+      await loadTrips();
+    })();
+  </script>
+</body>
+</html>

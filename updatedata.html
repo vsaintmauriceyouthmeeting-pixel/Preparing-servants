@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تعديل بيانات المستخدم</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+    :root {
+      --color1: rgb(250, 238, 180);
+      --color2: rgb(212, 46, 35);
+      --color3: rgb(34, 42, 59);
+      --color4: rgb(170, 123, 76);
+      --color5: rgb(253, 244, 204);
+      --color6: rgb(255, 255, 255);
+    }
+    body {
+      font-family: 'Tajawal', 'Segoe UI', Tahoma, sans-serif;
+      background-color: var(--color6);
+      color: var(--color3);
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: var(--color5);
+      padding: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .header-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-direction: row-reverse;
+      max-width: 1200px;
+      margin: auto;
+    }
+    .header-container img {
+      width: 300px;
+      height: 90px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      margin: 0 10px;
+    }
+    .header-text {
+      font-size: 26px;
+      font-weight: bold;
+      color: var(--color4);
+      white-space: nowrap;
+    }
+    nav.navbar {
+      margin: 20px auto;
+      background-color: var(--color5);
+      padding: 10px;
+      border-radius: 8px;
+      max-width: 1200px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    nav.navbar .links {
+      display: flex;
+      gap: 20px;
+    }
+    nav.navbar a {
+      text-decoration: none;
+      color: var(--color3);
+      font-weight: 600;
+      padding: 5px 10px;
+      transition: color 0.3s;
+    }
+    nav.navbar a:hover { color: var(--color2); }
+    nav.navbar .logout {
+      background: var(--color2);
+      color: var(--color6);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+    nav.navbar .logout:hover { background: #991b1b; }
+
+    .content-box {
+      max-width: 800px;
+      margin: 40px auto;
+      background-color: var(--color5);
+      padding: 30px;
+      border-radius: 15px;
+      border: 2px solid var(--color4);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .content-box h2 {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      text-align: center;
+      color: var(--color3);
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    .btn-primary {
+      background-color: var(--color4);
+      color: var(--color6);
+      padding: 12px 20px;
+      font-weight: bold;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(170,123,76,0.5);
+      transition: 0.3s;
+    }
+    .btn-primary:hover {
+      background-color: rgb(170,123,76);
+      box-shadow: 0 6px 12px rgba(170,123,76,0.5);
+    }
+    #formFields div {
+      margin-bottom: 12px;
+    }
+    #formFields label {
+      font-weight: bold;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .header-container { flex-wrap: wrap; justify-content: center; text-align: center; }
+      .header-text { font-size: 16px; margin: 5px 0; }
+      .header-container img { width: 70px; height: 70px; margin: 5px 0; }
+      nav.navbar { padding: 8px 5%; }
+      nav.navbar .links { flex-wrap: wrap; justify-content: center; gap: 5px; }
+      nav.navbar a { padding: 5px 8px; font-size: 14px; }
+      nav.navbar .logout { padding: 6px 12px; font-size: 14px; }
+      .content-box { max-width: 95%; margin: 15px auto; padding: 15px; }
+      .content-box h2 { font-size: 20px; }
+      input, textarea { font-size: 15px; padding: 8px; }
+      .btn-primary { padding: 10px; font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-container">
+      <div class="header-text">تعديل البيانات</div>
+      <img src="logo.png" alt="Logo">
+      <div class="header-text">أجتماع حامي الايمان جامعة وخرجين</div>
+    </div>
+  </header>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="links">
+      <a href="home_student.html">الرئيسية</a>
+      <a href="export_poems.html">الأشعار</a>
+      <a href="rigester.html">مسح كود الحضور</a>
+      <a href="export.html">برنامج اليوم</a>
+      <a href="trip_detials.html">إدارة الرحلات</a>
+      <a href="export_father_quotes.html">أقوال الآباء</a>
+      <a href="updatedata.html">تعديل البيانات</a>
+    </div>
+    <a href="index.html" class="logout">تسجيل الخروج</a>
+  </nav>
+
+ <!-- Content -->
+<div class="content-box">
+  <h2>بيانات المستخدم</h2>
+
+  <!-- تسجيل الدخول -->
+  <div id="loginSection">
+    <input type="email" id="email" placeholder="الإيميل">
+    <input type="password" id="password" placeholder="كلمة المرور">
+    <button onclick="loginAndFetch()" class="btn-primary">عرض البيانات</button>
+    <p id="loginStatus" class="text-red-600 mt-2"></p>
+  </div>
+
+  <!-- نموذج البيانات -->
+  <div id="userForm" class="mt-6 hidden">
+    <h3 class="text-xl font-semibold mb-4">بياناتك:</h3>
+    <div id="formFields"></div>
+    <button onclick="updateData()" class="btn-primary mt-3">تحديث البيانات</button>
+    <button onclick="deleteAccount()" class="btn-primary mt-3 bg-red-600 hover:bg-red-700">حذف حسابي</button>
+  </div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDWLO50vU1fsjBBCnSHFdTbDAPEIlopkSo",
+  authDomain: "preparsystemapp.firebaseapp.com",
+  projectId: "preparsystemapp",
+  storageBucket: "preparsystemapp.firebasestorage.app",
+  messagingSenderId: "740305406109",
+  appId: "1:740305406109:web:0dce232a4fcde8667aac74",
+  measurementId: "G-J0YPS1RLE5"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// عند تحميل الصفحة، تحقق من وجود مستخدم مسجّل دخول
+window.onload = async function() {
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      // إخفاء قسم تسجيل الدخول
+      document.getElementById("loginSection").style.display = "none";
+      // عرض بيانات المستخدم مباشرة
+      await displayUserData(user.uid);
+    } else {
+      document.getElementById("loginSection").style.display = "block";
+    }
+  });
+}
+
+// تسجيل الدخول وجلب البيانات إذا لم يكن المستخدم مسجّل
+async function loginAndFetch() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const status = document.getElementById("loginStatus");
+  status.textContent = "";
+
+  try {
+    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+    const uid = userCredential.user.uid;
+    document.getElementById("loginSection").style.display = "none";
+    await displayUserData(uid);
+  } catch (error) {
+    console.error(error);
+    status.textContent = "فشل تسجيل الدخول: " + error.message;
+  }
+}
+
+// عرض بيانات المستخدم
+async function displayUserData(uid) {
+  try {
+    const userDoc = await db.collection("users").doc(uid).get();
+    if (!userDoc.exists) {
+      alert("لا توجد بيانات للمستخدم.");
+      return;
+    }
+    const data = userDoc.data();
+    const formFields = document.getElementById("formFields");
+    formFields.innerHTML = "";
+
+    for (const [key, value] of Object.entries(data)) {
+      formFields.innerHTML += `
+        <div>
+          <label>${key}</label>
+          <input type="text" id="${key}" value="${value}">
+        </div>
+      `;
+    }
+
+    document.getElementById("userForm").classList.remove("hidden");
+  } catch (error) {
+    console.error(error);
+    alert("حدث خطأ أثناء جلب البيانات: " + error.message);
+  }
+}
+
+// تحديث البيانات
+async function updateData() {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const uid = user.uid;
+  const formFields = document.getElementById("formFields");
+  const inputs = formFields.querySelectorAll("input");
+
+  const updatedData = {};
+  inputs.forEach(input => { updatedData[input.id] = input.value; });
+
+  try {
+    await db.collection("users").doc(uid).set(updatedData);
+    alert("تم تحديث البيانات بنجاح!");
+  } catch (error) {
+    console.error(error);
+    alert("حدث خطأ أثناء التحديث.");
+  }
+}
+
+// حذف الحساب
+async function deleteAccount() {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const confirmDelete = confirm("هل أنت متأكد من حذف حسابك نهائيًا؟ سيتم حذف جميع بياناتك!");
+  if (!confirmDelete) return;
+
+  const uid = user.uid;
+
+  try {
+    await db.collection("users").doc(uid).delete();
+    await user.delete();
+    alert("تم حذف الحساب والبيانات بنجاح!");
+    window.location.href = "index.html";
+  } catch (error) {
+    console.error(error);
+    if (error.code === 'auth/requires-recent-login') {
+      alert("يجب إعادة تسجيل الدخول قبل حذف الحساب. يرجى تسجيل الدخول مرة أخرى ثم المحاولة.");
+    } else {
+      alert("حدث خطأ أثناء حذف الحساب: " + error.message);
+    }
+  }
+}
+
+
+</script>
+</body>
+</html>

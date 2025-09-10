@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نظام كيو آر كود</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+
+    :root {
+      --color1: rgb(250, 238, 180);
+      --color2: rgb(212, 46, 35);
+      --color3: rgb(34, 42, 59);
+      --color4: rgb(170, 123, 76);
+      --color5: rgb(253, 244, 204);
+      --color6: rgb(255, 255, 255);
+    }
+
+    body {
+      font-family: 'Tajawal', 'Segoe UI', Tahoma, sans-serif;
+      background-color: var(--color6);
+      color: var(--color3);
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ===== Header ===== */
+    header {
+      background-color: var(--color5);
+      padding: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .header-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-direction: row-reverse;
+      max-width: 1200px;
+      margin: auto;
+      gap: 10px;
+    }
+
+    .header-container img {
+      width: 300px;
+      height: 90px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .header-text {
+      font-size: 26px;
+      font-weight: bold;
+      color: var(--color4);
+      white-space: nowrap;
+    }
+
+    /* ===== Navbar ===== */
+    nav.navbar {
+      margin: 20px auto;
+      background-color: var(--color5);
+      padding: 10px;
+      border-radius: 8px;
+      max-width: 1200px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    nav.navbar .links {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    nav.navbar a {
+      text-decoration: none;
+      color: var(--color3);
+      font-weight: 600;
+      padding: 5px 10px;
+      transition: color 0.3s;
+    }
+
+    nav.navbar a:hover {
+      color: var(--color2);
+    }
+
+    nav.navbar .logout {
+      background: #dc2626;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+    nav.navbar .logout:hover {
+      background: #991b1b;
+    }
+
+    /* ===== Content ===== */
+    .content-flex {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      max-width: 1200px;
+      margin: 40px auto;
+      gap: 20px;
+    }
+
+    .content-box {
+      flex: 1;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .content-box h2 {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      border-bottom: 2px solid var(--color5);
+      padding-bottom: 8px;
+      color: var(--color3);
+    }
+
+    /* ===== جعل التصميم متجاوب بالكامل للشاشات الصغيرة ===== */
+    @media (max-width: 768px) {
+      /* تصغير حجم العنوان والصورة */
+      .header-container {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      .header-container img {
+        width: 180px;
+        height: 60px;
+        margin: 10px 0;
+      }
+
+      .header-text {
+        font-size: 20px;
+        text-align: center;
+      }
+
+      /* جعل الروابط في سطرين */
+      nav.navbar {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+      }
+
+      nav.navbar .links {
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      /* ترتيب الـ content box تحت بعض */
+      .content-flex {
+        flex-direction: column;
+        max-width: 95%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-container">
+      <div class="header-text">برنامج شباب حامي الإيمان</div>
+      <img src="logo.png" alt="Logo">
+      <div class="header-text">أجتماع حامي الإيمان جامعة وخرجين</div>
+    </div>
+  </header>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="links">
+      <a href="home_student.html">الرئيسية</a>
+      <a href="rigester.html">مسح كود الحضور</a>
+      <a href="export_poems.html">النقط</a>  
+      <a href="export.html">الخطة الدراسية</a>
+      <a href="trip_detials.html"> الرحلات</a>
+      <a href="updatedata.html">تعديل البيانات</a>
+    </div>
+    <a href="index.html" class="logout">تسجيل الخروج</a>
+  </nav>
+
+  <!-- Content -->
+  <div class="content-flex">
+    <!-- تسجيل الدخول -->
+    <div class="content-box">
+      <h2>تسجيل الدخول</h2>
+      <div id="auth-container">
+        <div id="login-form" class="space-y-4">
+          <div>
+            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">البريد الإلكتروني</label>
+            <input type="email" id="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="example@domain.com">
+          </div>
+          <div>
+            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">كلمة المرور</label>
+            <input type="password" id="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="********">
+          </div>
+          <button id="login-btn" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors">تسجيل الدخول</button>
+        </div>
+        
+        <div id="user-info" class="hidden">
+          <div class="flex items-center space-x-4 mb-4">
+            <img id="user-avatar" src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/47eeb42e-9c1a-405c-bf22-936184926b7d.png" alt="صورة المستخدم" class="w-12 h-12 rounded-full object-cover">
+            <div>
+              <h3 id="user-name" class="font-medium text-gray-800">مستخدم</h3>
+              <p id="user-email" class="text-sm text-gray-500">user@example.com</p>
+            </div>
+          </div>
+          <button id="logout-btn" class="w-full bg-gray-100 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors">تسجيل الخروج</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR Code -->
+    <div class="content-box">
+      <h2>كيو آر كود</h2>
+      <div class="flex flex-col items-center">
+        <div id="qr-code" class="p-4 bg-white rounded-lg border border-gray-200 mb-6 hidden">
+          <canvas id="qr-canvas" class="mx-auto"></canvas>
+        </div>
+        <div id="login-message" class="text-center p-4 text-gray-600">
+          الرجاء تسجيل الدخول لعرض كيو آر كود الخاص بك
+        </div>
+        <div id="qr-data-section" class="hidden w-full space-y-4 mt-4"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase & Script -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDWLO50vU1fsjBBCnSHFdTbDAPEIlopkSo",
+  authDomain: "preparsystemapp.firebaseapp.com",
+  projectId: "preparsystemapp",
+  storageBucket: "preparsystemapp.firebasestorage.app",
+  messagingSenderId: "740305406109",
+  appId: "1:740305406109:web:0dce232a4fcde8667aac74",
+  measurementId: "G-J0YPS1RLE5"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    const loginForm = document.getElementById('login-form');
+    const userInfo = document.getElementById('user-info');
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const qrCodeContainer = document.getElementById('qr-code');
+    const loginMessage = document.getElementById('login-message');
+    const qrCanvas = document.getElementById('qr-canvas');
+    const qrDataSection = document.getElementById('qr-data-section');
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        loginForm.classList.add('hidden');
+        userInfo.classList.remove('hidden');
+        document.getElementById('user-name').textContent = user.displayName || 'مستخدم';
+        document.getElementById('user-email').textContent = user.email;
+        generateQRCode(user.uid);
+        showUserQRData(user);
+      } else {
+        loginForm.classList.remove('hidden');
+        userInfo.classList.add('hidden');
+        qrCodeContainer.classList.add('hidden');
+        loginMessage.classList.remove('hidden');
+        qrDataSection.classList.add('hidden');
+      }
+    });
+
+    loginBtn.addEventListener('click', () => {
+      const email = emailInput.value;
+      const password = passwordInput.value;
+      if (!email || !password) {
+        alert('الرجاء إدخال البريد الإلكتروني وكلمة المرور');
+        return;
+      }
+      auth.signInWithEmailAndPassword(email, password).catch(error => {
+        alert(`خطأ في تسجيل الدخول: ${error.message}`);
+      });
+    });
+
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => auth.signOut());
+    }
+
+    function generateQRCode(content) {
+      QRCode.toCanvas(qrCanvas, content, {
+        width: 200,
+        margin: 1,
+        color: { dark: '#000000', light: '#ffffff' }
+      }, (error) => {
+        if (error) {
+          alert('حدث خطأ أثناء توليد الكيو آر كود');
+          return;
+        }
+        loginMessage.classList.add('hidden');
+        qrCodeContainer.classList.remove('hidden');
+      });
+    }
+
+    function showUserQRData(user) {
+      qrDataSection.innerHTML = `
+        <div class="bg-gray-50 p-4 rounded-lg">
+          <h3 class="font-medium text-gray-700">المعرف الفريد</h3>
+          <p class="text-gray-900 mt-1">${user.uid}</p>
+        </div>
+        <div class="bg-gray-50 p-4 rounded-lg">
+          <h3 class="font-medium text-gray-700">البريد الإلكتروني</h3>
+          <p class="text-gray-900 mt-1">${user.email || 'غير متوفر'}</p>
+        </div>
+        <div class="bg-gray-50 p-4 rounded-lg">
+          <h3 class="font-medium text-gray-700">تاريخ الإنشاء</h3>
+          <p class="text-gray-900 mt-1">${new Date(user.metadata.creationTime).toLocaleString()}</p>
+        </div>
+      `;
+      qrDataSection.classList.remove('hidden');
+    }
+    auth.onAuthStateChanged(async user => {
+  if (user) {
+    loginForm.classList.add('hidden');
+    userInfo.classList.remove('hidden');
+    document.getElementById('user-name').textContent = user.displayName || 'مستخدم';
+    document.getElementById('user-email').textContent = user.email;
+
+    // جلب بيانات المستخدم من Firestore
+    const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+    const userData = userDoc.data() || {};
+    const totalAttendance = userData.totalAttendance || 0;
+
+    generateQRCode(user.uid);
+    showUserQRData(user, totalAttendance);
+  } else {
+    loginForm.classList.remove('hidden');
+    userInfo.classList.add('hidden');
+    qrCodeContainer.classList.add('hidden');
+    loginMessage.classList.remove('hidden');
+    qrDataSection.classList.add('hidden');
+  }
+});
+
+function showUserQRData(user, totalAttendance) {
+  qrDataSection.innerHTML = `
+    <div class="bg-gray-50 p-4 rounded-lg">
+      <h3 class="font-medium text-gray-700">المعرف الفريد</h3>
+      <p class="text-gray-900 mt-1">${user.uid}</p>
+    </div>
+    <div class="bg-gray-50 p-4 rounded-lg">
+      <h3 class="font-medium text-gray-700">البريد الإلكتروني</h3>
+      <p class="text-gray-900 mt-1">${user.email || 'غير متوفر'}</p>
+    </div>
+    <div class="bg-gray-50 p-4 rounded-lg">
+      <h3 class="font-medium text-gray-700">تاريخ الإنشاء</h3>
+      <p class="text-gray-900 mt-1">${new Date(user.metadata.creationTime).toLocaleString()}</p>
+    </div>
+    <div class="bg-gray-50 p-4 rounded-lg">
+      <h3 class="font-medium text-gray-700">عدد أيام الحضور</h3>
+      <p class="text-gray-900 mt-1">${totalAttendance} يوم</p>
+    </div>
+  `;
+  qrDataSection.classList.remove('hidden');
+}
+
+  </script>
+</body>
+</html>

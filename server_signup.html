@@ -1,0 +1,302 @@
+
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    
+  <meta charset="UTF-8" />
+  <title>تسجيل الدخول وإنشاء حساب مع Firebase</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Firebase App (the core Firebase SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <!-- Firebase Authentication -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <!-- Firebase Firestore -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <style>
+    :root {
+      --color1: rgb(250, 238, 180);
+      --color2: rgb(212, 46, 35);
+      --color3: rgb(34, 42, 59);
+      --color4: rgb(170, 123, 76);
+      --color5: rgb(253, 244, 204);
+      --color6: rgb(255, 255, 255);
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--color6);
+      color: var(--color3);
+      margin: 0;
+      padding: 0;
+      width: 65%;
+    }
+    button {
+      background: var(--color4);
+      color: var(--color6);
+      border: none;
+      padding: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 4px 8px rgb(170, 123, 76);
+    }
+    button:hover {
+      background: rgb(170, 123, 76);
+      box-shadow: 0 6px 12px rgb(170, 123, 76);
+    }
+    header {
+      background-color: var(--color1);
+      padding: 16px 0;
+      width: 150%;
+      height: 50px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .header-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 24px;
+      flex-direction: row-reverse;
+      width: 100%;
+    }
+    .header-container img {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      margin: 0 20px;
+    }
+    .header-text {
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--color3);
+      white-space: nowrap;
+      flex: 1;
+    }
+    .form-two-columns {
+      display: flex;
+      gap: 64px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 32px;
+    }
+    .section-box {
+      background-color: var(--color1);
+      padding: 24px;
+      border-radius: 24px;
+      border: 2px solid var(--color1);
+      width: 100%;
+      max-width: 440px;
+      box-sizing: border-box;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+    }
+    .section-title {
+      font-size: 20px;
+      padding: 12px 20px;
+      background-color: white;
+      color: var(--color3);
+      border-radius: 17px;
+      margin-bottom: 24px;
+      text-align: right;
+      border: 5px solid var(--color4);
+    }
+    label {
+      font-weight: 600;
+      color: var(--color3);
+    }
+    input, select {
+      padding: 8px 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1.5px solid var(--color4);
+      background-color: var(--color6);
+      width: 100%;
+      box-sizing: border-box;
+      text-align: right;
+      color: var(--color3);
+    }
+    .message {
+      text-align: center;
+      margin-top: 18px;
+      font-weight: 700;
+    }
+    .error { color: rgb(212, 46, 35); }
+    .success { color: rgb(34, 42, 59); }
+    .hidden { display: none; }
+    .gender-type {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .gender-type label {
+      flex: 1;
+      background: var(--color1);
+      border-radius: 12px;
+      padding: 12px;
+      cursor: pointer;
+      text-align: center;
+      user-select: none;
+      border: 2px solid transparent;
+      color: var(--color3);
+      font-weight: 600;
+    }
+    .gender-type input[type="radio"] { display: none; }
+    .gender-type input[type="radio"]:checked + label {
+      border-color: var(--color2);
+      background: var(--color4);
+      color: var(--color6);
+    }
+    .form-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    button.main-btn {
+      background: var(--color4);
+      color: white;
+      font-weight: 700;
+      padding: 10px 20px;
+      border-radius: 12px;
+      border: none;
+      flex: 1;
+      box-shadow: 0 4px 10px rgba(212, 46, 35, 0.4);
+    }
+    button.secondary-btn {
+      background: var(--color4);
+      color: var(--color6);
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 12px;
+      border: 2px solid var(--color4);
+      flex: 1;
+    }
+    /* ===== تعديل المساحة للشاشات الصغيرة بدون تغيير التصميم ===== */
+@media (max-width: 768px) {
+  .header-container, .content-flex, nav.navbar {
+    max-width: 95%; /* خلي المحتوى قريب من حواف الشاشة */
+    margin: auto;   /* تمركز تلقائي */
+  }
+}
+
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-container">
+      <div class="header-text right-text">تسجيل بيانات خدام الاجتماع</div>
+      <img src="logo.png" alt="Logo" />
+      <div class="header-text left-text">أجتماع أعداد خدام</div>
+    </div>
+  </header>
+
+  <form id="registerForm" novalidate>
+    <div class="form-two-columns">
+      <div class="section-box">
+        <h3 class="section-title right-aligned">البيانات الشخصية</h3>
+        <label for="name">الاسم *</label>
+        <input type="text" id="name" name="name" required />
+        <label for="email">البريد الإلكتروني *</label>
+        <input type="email" id="email" name="email" required autocomplete="email" />
+        <label for="password">كلمة المرور *</label>
+        <input type="password" id="password" name="password" minlength="6" required autocomplete="new-password" />
+        <label for="phone">الهاتف *</label>
+        <input type="tel" id="phone" name="phone" required pattern="^[0-9+\-\s]{6,15}$" />
+        <label for="uniqueCode">الكود المميز *</label>
+        <input type="text" id="uniqueCode" name="uniqueCode" required />
+        <label for="gender">النوع *</label>
+        <div class="gender-type">
+          <input type="radio" id="gender-male" name="gender" value="ولد" />
+          <label for="gender-male">👦 ولد</label>
+          <input type="radio" id="gender-female" name="gender" value="بنت" />
+          <label for="gender-female">👧 بنت</label>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="main-btn">تسجيل</button>
+          <button id="backBtn" type="button" class="secondary-btn">العودة لتسجيل الدخول</button>
+        </div>
+        <div id="message"></div>
+      </div>
+    </div>
+  </form>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+    import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDWLO50vU1fsjBBCnSHFdTbDAPEIlopkSo",
+  authDomain: "preparsystemapp.firebaseapp.com",
+  projectId: "preparsystemapp",
+  storageBucket: "preparsystemapp.firebasestorage.app",
+  messagingSenderId: "740305406109",
+  appId: "1:740305406109:web:0dce232a4fcde8667aac74",
+  measurementId: "G-J0YPS1RLE5"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    document.getElementById("backBtn").addEventListener("click", () => {
+      window.location.href = "index.html";
+    });
+
+    const registerForm = document.getElementById("registerForm");
+    const messageDiv = document.getElementById("message");
+
+    function showMessage(msg, isError = false) {
+      messageDiv.textContent = msg;
+      messageDiv.style.color = isError ? "red" : "green";
+    }
+
+    registerForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const uniqueCode = document.getElementById("uniqueCode").value.trim();
+      const gender = document.querySelector('input[name="gender"]:checked')?.value || "";
+
+      if (!name || !email || !password || !phone || !uniqueCode || !gender) {
+        showMessage("يرجى ملء جميع الحقول.", true);
+        return;
+      }
+
+      if (uniqueCode !== "BA2AB2") {
+        showMessage("كود غير صحيح", true);
+        return;
+      }
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        await setDoc(doc(db, "users", user.uid), {
+          name,
+          email,
+          phone,
+          gender,
+          uniqueCode,
+          role: "server",
+          createdAt: serverTimestamp(),
+        });
+
+        showMessage("تم التسجيل بنجاح ✅");
+        registerForm.reset();
+      } catch (error) {
+        console.error(error);
+        showMessage(error.message, true);
+      }
+    });
+  </script>
+</body>
+</html>

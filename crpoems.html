@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>إدارة المسابقات</title>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+  <!-- خط -->
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+    :root {
+      --color1: rgb(250, 238, 180);
+      --color2: rgb(212, 46, 35);
+      --color3: rgb(34, 42, 59);
+      --color4: rgb(170, 123, 76);
+      --color5: rgb(253, 244, 204);
+      --color6: rgb(255, 255, 255);
+    }
+    body {
+      font-family: 'Tajawal', 'Segoe UI', Tahoma, sans-serif;
+      background-color: var(--color6);
+      color: var(--color3);
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: var(--color5);
+      padding: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 10;
+      z-index: 1000;
+    }
+    .header-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-direction: row-reverse;
+      max-width: 1200px;
+      margin: auto;
+    }
+    .header-container img {
+      width: 300px;
+      height: 90px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      margin: 0 10px;
+    }
+    .header-text {
+      font-size: 28px;
+      font-weight: bold;
+      color: var(--color4);
+      white-space: nowrap;
+    }
+    nav.navbar {
+      margin: 20px auto;
+      background-color: var(--color5);
+      padding: 10px;
+      border-radius: 8px;
+      max-width: 1200px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    nav.navbar .links {
+      display: flex;
+      gap: 20px;
+    }
+    nav.navbar a {
+      text-decoration: none;
+      color: var(--color3);
+      font-weight: 600;
+      padding: 5px 10px;
+      transition: color 0.3s;
+    }
+    nav.navbar a:hover {
+      color: var(--color2);
+    }
+    nav.navbar .logout {
+      color: var(--color6);
+      background-color: var(--color2);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+    nav.navbar .logout:hover {
+      background: #991b1b;
+    }
+    .btn-primary, .btn-secondary {
+      background: var(--color4);
+      color: var(--color6);
+      border: none;
+      padding: 12px 20px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 4px 8px rgb(170, 123, 76);
+    }
+    .btn-primary:hover, .btn-secondary:hover {
+      background: rgb(150, 100, 60);
+    }
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+    h2 {
+      color: #aa7b4c;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px 0;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #aa7b4c;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #8a6235;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    table th, table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+    table th {
+      background-color: #fdf4cc;
+      color: #222;
+    }
+    .participants {
+      margin-top: 10px;
+      background: #f7f7f7;
+      padding: 10px;
+      border-radius: 8px;
+      display: none;
+    }
+    /* نافذة اختيار المشارك */
+    #participantModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+    }
+    #participantModal > div {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 500px;
+      width: 90%;
+    }
+    @media (max-width: 768px) {
+      .header-container, .content-flex, nav.navbar {
+        max-width: 95%;
+        margin: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- الهيدر -->
+  <header>
+    <div class="header-container">
+      <div class="header-text">ادارة المسابقات</div>
+      <img src="logo.png" alt="Logo">
+      <div class="header-text">أجتماع أعداد خدام</div>
+    </div>
+  </header>
+
+  <!-- شريط التنقل -->
+  <nav class="navbar">
+    <div class="links">
+      <a href="home_teacher.html">الرئيسية</a>
+        <a href="ascenqrcode.html">مسح كود الحضور</a>
+        <a href="crpoems.html">المسابقات</a>
+        <a href="program.html">برنامج اليوم</a>
+        <a href="trip.html">إدارة الرحلات</a>
+        <a href="fsaying.html"> المبادرات</a>
+        <a href="dataview.html">بيانات المخدومين</a>
+    </div>
+    <a href="index.html" class="logout">تسجيل الخروج</a>
+  </nav>
+
+  <div class="container">
+    <!-- إضافة مسابقة جديدة -->
+    <h2>إضافة مسابقة جديدة</h2>
+    <input type="text" id="competitionName" placeholder="اسم المسابقة" />
+    <input type="date" id="competitionDate" />
+    <button onclick="addCompetition()">إضافة مسابقة</button>
+
+    <!-- جدول عرض المسابقات -->
+    <h2>قائمة المسابقات</h2>
+    <table id="competitionsTable">
+      <thead>
+        <tr>
+          <th>اسم المسابقة</th>
+          <th>تاريخ المسابقة</th>
+          <th>المشاركين</th>
+          <th>إضافة مشارك</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- نافذة اختيار المشارك -->
+  <div id="participantModal">
+    <div>
+      <h3 style="color:#aa7b4c;">اختر المشاركين</h3>
+      <div id="usersCheckboxList" style="max-height:250px; overflow-y:auto; margin-bottom:15px;"></div>
+      <button class="btn-primary" onclick="saveParticipants()">حفظ</button>
+      <button class="btn-secondary" onclick="closeParticipantModal()">إلغاء</button>
+    </div>
+  </div>
+
+  <script>
+    // إعدادات Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDWLO50vU1fsjBBCnSHFdTbDAPEIlopkSo",
+      authDomain: "preparsystemapp.firebaseapp.com",
+      projectId: "preparsystemapp",
+      storageBucket: "preparsystemapp.firebasestorage.app",
+      messagingSenderId: "740305406109",
+      appId: "1:740305406109:web:0dce232a4fcde8667aac74",
+      measurementId: "G-J0YPS1RLE5"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let currentCompetitionId = null;
+    let usersData = [];
+
+    // ========== إضافة مسابقة جديدة ==========
+    async function addCompetition() {
+      const name = document.getElementById("competitionName").value.trim();
+      const date = document.getElementById("competitionDate").value;
+
+      if (!name || !date) {
+        alert("من فضلك أدخل اسم وتاريخ المسابقة");
+        return;
+      }
+
+      await db.collection("competitions").add({
+        name,
+        date,
+        participants: []
+      });
+
+      document.getElementById("competitionName").value = "";
+      document.getElementById("competitionDate").value = "";
+      loadCompetitions();
+    }
+
+    // ========== فتح نافذة اختيار المشارك ==========
+    async function addParticipant(competitionId) {
+      currentCompetitionId = competitionId;
+      const modal = document.getElementById("participantModal");
+      const usersList = document.getElementById("usersCheckboxList");
+      usersList.innerHTML = "";
+
+      // جلب كل المستخدمين الذين role = client فقط
+      const snapshot = await db.collection("users").where("role", "==", "client").get();
+      usersData = [];
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        usersData.push({ id: doc.id, name: data.name, email: data.email });
+
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <label>
+            <input type="checkbox" value="${doc.id}">
+            ${data.name} (${data.email})
+          </label>
+        `;
+        usersList.appendChild(div);
+      });
+
+      modal.style.display = "flex";
+    }
+
+    // غلق النافذة
+    function closeParticipantModal() {
+      document.getElementById("participantModal").style.display = "none";
+    }
+
+    // حفظ المشاركين المحددين وتحديث النقاط وعدد المسابقات
+async function saveParticipants() {
+  const checkboxes = document.querySelectorAll("#usersCheckboxList input[type='checkbox']:checked");
+  if (checkboxes.length === 0) {
+    alert("من فضلك اختر على الأقل مشارك واحد");
+    return;
+  }
+
+  const competitionRef = db.collection("competitions").doc(currentCompetitionId);
+  const docSnapshot = await competitionRef.get();
+  const existingParticipants = docSnapshot.data().participants || [];
+  const participantsToAdd = [];
+
+  for (let checkbox of checkboxes) {
+    const userId = checkbox.value;
+    const user = usersData.find(u => u.id === userId);
+
+    if (user && !existingParticipants.includes(user.name)) {
+      participantsToAdd.push(user.name);
+
+      // تحديث النقاط وعدد المسابقات لكل مستخدم
+      await db.collection("users").doc(user.id).update({
+        points: firebase.firestore.FieldValue.increment(1),
+        competitionsCount: firebase.firestore.FieldValue.increment(1) // ← إضافة هذا السطر
+      });
+    }
+  }
+
+  if (participantsToAdd.length > 0) {
+    await competitionRef.update({
+      participants: firebase.firestore.FieldValue.arrayUnion(...participantsToAdd)
+    });
+  }
+
+  alert("تمت إضافة المشاركين وتحديث النقاط وعدد المسابقات بنجاح ✅");
+  closeParticipantModal();
+  loadCompetitions();
+}
+
+    // ========== تحميل قائمة المسابقات ==========
+    async function loadCompetitions() {
+      const tableBody = document.querySelector("#competitionsTable tbody");
+      tableBody.innerHTML = "";
+
+      const snapshot = await db.collection("competitions").get();
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const participants = data.participants || [];
+
+        const row = `
+          <tr>
+            <td>${data.name}</td>
+            <td>${data.date}</td>
+            <td>${participants.join(", ") || "لا يوجد مشاركين"}</td>
+            <td><button onclick="addParticipant('${doc.id}')">إضافة مشارك</button></td>
+          </tr>
+        `;
+        tableBody.innerHTML += row;
+      });
+    }
+
+    // تحميل المسابقات عند فتح الصفحة
+    document.addEventListener("DOMContentLoaded", loadCompetitions);
+  </script>
+</body>
+</html>

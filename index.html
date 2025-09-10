@@ -1,0 +1,287 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+
+  <meta charset="UTF-8" />
+  <title>تسجيل الدخول مع Firebase</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Firebase App (the core Firebase SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <!-- Firebase Authentication -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <!-- Firebase Firestore -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <style>
+    /* Basic color*/
+    :root {
+  --color1: rgb(250, 238, 180); /* أصفر فاتح للخلفية */
+  --color2: rgb(212, 46, 35);   /* أحمر للأزرار أو عناصر بارزة */
+  --color3: rgb(34, 42, 59);    /* لون نصوص غامق */
+  --color4: rgb(170, 123, 76);  /* بني غامق للأزرار */
+  --color5: rgb(253, 244, 204); /* بيج فاتح */
+  --color6: rgb(255, 255, 255); /* أبيض */
+    }
+
+  body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-seri;
+  background-color: var(--color6);
+  color: var(--color3);
+  margin: 0;
+  padding: 35px;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+  direction: rtl;
+  text-align: center;
+    }
+
+    header {
+  position: relative;
+  padding: 20px 16px;
+  box-sizing: border-box;
+  text-align: center;
+  overflow: hidden;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.logo {
+  width: 100px;
+  margin: 0 auto 0px;
+  display: block;
+  position: relative;
+  z-index: 2;
+}
+
+/* دي الخلفية اللي تبدأ من تحت الصورة */
+.logo-bg {
+  position: absolute;
+  top: 85px; /* ← تبدأ من بعد الصورة (تقدّري تزودي الرقم حسب طول الصورة) */
+  left: 0;
+  width: 100%;
+  height: 75px; /* ← الارتفاع اللي انتي عايزاه تحت الصورة */
+  background-color: var(--color1);
+  z-index: 1;
+}
+
+.title {
+  position: relative;
+  z-index: 2;
+  font-size: 25px;
+  font-weight: bold;
+  color: var(--color3);
+  margin: 0;
+}
+
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background-color: var(--color1);
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(34, 42, 59, 0.15);
+    }
+
+    label {
+      font-size: 25px;
+      text-align: right;
+      font-weight: 600;
+      color: var(--color3);
+    }
+
+    input {
+      padding: 8px 12px;
+      font-size: 20px;
+      border-radius: 8px;
+      border: 1.5px solid var(--color4);
+      background-color: var(--color6);
+      width: 100%;
+      box-sizing: border-box;
+      text-align: right;
+      color: var(--color3);
+      transition: border-color 0.3s ease;
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--color2);
+      box-shadow: 0 0 6px var(--color2);
+      background-color: var(--color6);
+    }
+
+    button {
+      background: var(--color4);
+      color: var(--color6);
+      border: none;
+      padding: 12px;
+      font-size: 20px;
+      font-weight: 700;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 4px 8px rgba(212, 46, 35, 0.4);
+    }
+    button:hover {
+      background: var(--color4);
+      box-shadow: 0 6px 12px rgba(180, 30, 25, 0.6);
+    }
+    .button-group {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.button-group button {
+  flex: 1;
+  background: var(--color4);
+  box-shadow: 0 4px 8px rgba(170, 123, 76, 0.4);
+}
+
+.button-group button:hover {
+  background: rgb(140, 100, 60);
+  box-shadow: 0 6px 12px rgba(140, 100, 60, 0.6);
+}
+    .message {
+      text-align: center;
+      margin-top: 18px;
+      font-weight: 700;
+    }
+    .error {
+      color: rgb(212, 46, 35);
+    }
+    .success {
+      color: rgb(34, 42, 59);
+    }
+
+    .link {
+      text-align: center;
+      margin-top: 16px;
+    }
+    /* ===== تعديل المساحة للشاشات الصغيرة بدون تغيير التصميم ===== */
+@media (max-width: 768px) {
+  .header-container, .content-flex, nav.navbar {
+    max-width: 95%; /* خلي المحتوى قريب من حواف الشاشة */
+    margin: auto;   /* تمركز تلقائي */
+  }
+}
+
+  </style>
+</head>
+<body>
+  <header>
+    <img src="logo.png" alt="اللوجو" class="logo" />
+    <div class="logo-bg"></div>
+    <h1 class="title">اجتماع اعداد خدام</h1>
+  </header>
+  
+  <h2 style="color: transparent;">تسجيل الدخول</h2>
+
+
+  <form id="loginForm" novalidate>
+    <label for="email">البريد الإلكتروني </label>
+    <input type="email" id="email" name="email" required autocomplete="email" />
+
+    <label for="password">كلمة المرور </label>
+    <input type="password" id="password" name="password" required autocomplete="current-password" />
+
+   
+   
+    <div id="message" class="message"></div>
+    
+  </form>
+  <div class="button-group">
+    <button id="loginBtn">تسجيل</button>
+    <button id="signupBtn">إنشاء حساب</button>
+  </div>  
+
+  <!-- استدعاء Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+<script>
+  // تكوين Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyCcGNzxF_OBCCQi9kO7y3NsMFrCXe_LBz0",
+  authDomain: "attandaceservice.firebaseapp.com",
+  projectId: "attandaceservice",
+  storageBucket: "attandaceservice.firebasestorage.app",
+  messagingSenderId: "414427228442",
+  appId: "1:414427228442:web:3f59de5caa4c35a71024a3",
+  measurementId: "G-Y1LGFK6JW5"
+  };
+
+  // تهيئة Firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const loginForm = document.getElementById('loginForm');
+  const messageDiv = document.getElementById('message');
+
+  function showMessage(message, isError = false) {
+    messageDiv.textContent = message;
+    messageDiv.className = 'message ' + (isError ? 'error' : 'success');
+  }
+
+  function clearMessage() {
+    messageDiv.textContent = '';
+    messageDiv.className = 'message';
+  }
+
+  // زر إنشاء حساب جديد
+  document.getElementById('signupBtn').addEventListener('click', () => {
+    window.location.href = 'signup.html';
+  });
+
+  // تسجيل الدخول
+  document.getElementById('loginBtn').addEventListener('click', async (e) => {
+    e.preventDefault();
+    clearMessage();
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    if (!email || !password) {
+      showMessage("يرجى ملء كل الحقول.", true);
+      return;
+    }
+
+    try {
+      const userCredential = await auth.signInWithEmailAndPassword(email, password);
+      const uid = userCredential.user.uid;
+
+      const userDoc = await db.collection('users').doc(uid).get();
+
+      if (userDoc.exists) {
+        const userData = userDoc.data();
+        const role = userData.role; // ✅ هنا كنا ناسيينها
+
+        if (role === "server") {
+          window.location.href = 'home_teacher.html'; // صفحة الخادمx
+        } else {
+          window.location.href = 'home_student.html'; // صفحة المخدوم
+        }
+      } else {
+        showMessage("المستخدم غير موجود في قاعدة البيانات.", true);
+      }
+
+    } catch (error) {
+      console.error('Error logging in:', error);
+      let errorMsg = 'حدث خطأ أثناء تسجيل الدخول.';
+      if (error.code === 'auth/user-not-found') {
+        errorMsg = 'البريد الإلكتروني غير موجود.';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMsg = 'كلمة المرور غير صحيحة.';
+      }
+      showMessage(errorMsg, true);
+    }
+  });
+</script>
+
+
+</body>
+</html>

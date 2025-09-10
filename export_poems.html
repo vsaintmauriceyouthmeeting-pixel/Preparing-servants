@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1024, initial-scale=1.0">
+  <title>بيانات المستخدم - الخدام</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+
+    :root {
+      --color1: rgb(250, 238, 180);
+      --color2: rgb(212, 46, 35);
+      --color3: rgb(34, 42, 59);
+      --color4: rgb(170, 123, 76);
+      --color5: rgb(253, 244, 204);
+      --color6: rgb(255, 255, 255);
+    }
+
+    body {
+      font-family: 'Tajawal', 'Segoe UI', Tahoma, sans-serif;
+      background-color: var(--color6);
+      color: var(--color3);
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Header */
+    header {
+      background-color: var(--color5);
+      padding: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .header-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-direction: row-reverse;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .header-container img {
+      width: 300px;
+      height: 90px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      margin: 0 10px;
+    }
+
+    .header-text {
+      font-size: 28px;
+      font-weight: bold;
+      color: var(--color4);
+      white-space: nowrap;
+    }
+
+    /* Navbar */
+    nav.navbar {
+      margin: 20px auto;
+      background-color: var(--color5);
+      padding: 10px;
+      border-radius: 8px;
+      max-width: 1200px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    nav.navbar .links {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    nav.navbar a {
+      text-decoration: none;
+      color: var(--color3);
+      font-weight: 600;
+      padding: 5px 10px;
+      transition: color 0.3s;
+    }
+
+    nav.navbar a:hover { color: var(--color2); }
+    nav.navbar .logout { color: var(--color6); background: var(--color2); padding: 6px 14px; border-radius: 8px; }
+    nav.navbar .logout:hover { background: #991b1b; }
+
+    /* Content Box */
+    .content-flex {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: var(--color5);
+      border-radius: 15px;
+      border: 2px solid var(--color4);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    h2 { text-align: center; font-size: 24px; margin-bottom: 20px; }
+
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .stat-card {
+      background: var(--color6);
+      padding: 15px;
+      border-radius: 10px;
+      flex: 1 1 150px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .stat-card h3 { font-weight: bold; margin-bottom: 5px; }
+
+    @media (max-width: 1024px) {
+      .header-container, .content-flex, nav.navbar { max-width: 95%; margin: auto; }
+      .stats { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="header-container">
+      <div class="header-text">بيانات المخدومين</div>
+      <img src="logo.png" alt="Logo">
+      <div class="header-text">أجتماع أعداد خدام</div>
+    </div>
+  </header>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="links">
+      <a href="home_student.html">الرئيسية</a>
+      <a href="rigester.html">مسح كود الحضور</a>
+      <a href="export_poems.html">النقط</a>  
+      <a href="export.html">الخطة الدراسية</a>
+      <a href="trip_detials.html"> الرحلات</a>
+      <a href="updatedata.html">تعديل البيانات</a>
+    </div>
+    <a href="index.html" class="logout" id="logout-btn">تسجيل الخروج</a>
+  </nav>
+
+  <!-- Content -->
+  <div class="content-flex">
+
+    <h2>بياناتك</h2>
+
+    <div id="login-section" style="display:none;">
+      <input type="email" id="email" placeholder="الإيميل" style="width:100%; padding:8px; margin-bottom:10px;">
+      <input type="password" id="password" placeholder="كلمة المرور" style="width:100%; padding:8px; margin-bottom:10px;">
+      <button id="login-btn" style="padding:10px 20px; background:#aa7b4c; color:white; border:none; border-radius:8px;">تسجيل الدخول</button>
+      <p id="loginStatus" style="color:red; margin-top:10px;"></p>
+    </div>
+
+    <div id="user-data" style="display:none;">
+      <div class="stats">
+        <div class="stat-card">
+          <h3>عدد أيام الحضور</h3>
+          <p id="totalAttendance"></p>
+        </div>
+        <div class="stat-card">
+          <h3>نسبة الحضور</h3>
+          <p id="attendancePercentage"></p>
+        </div>
+        <div class="stat-card">
+          <h3>النقاط</h3>
+          <p id="points"></p>
+        </div>
+        <div class="stat-card">
+          <h3>عدد المسابقات</h3>
+          <p id="competitionsCount"></p>
+        </div>
+        <div class="stat-card">
+          <h3>عدد المبادرات</h3>
+          <p id="initiativesCount"></p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDWLO50vU1fsjBBCnSHFdTbDAPEIlopkSo",
+    authDomain: "preparsystemapp.firebaseapp.com",
+    projectId: "preparsystemapp",
+    storageBucket: "preparsystemapp.firebasestorage.app",
+    messagingSenderId: "740305406109",
+    appId: "1:740305406109:web:0dce232a4fcde8667aac74"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const loginBtn = document.getElementById('login-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const loginStatus = document.getElementById('loginStatus');
+
+  const userDataDiv = document.getElementById('user-data');
+  const totalAttendanceEl = document.getElementById('totalAttendance');
+  const attendancePercentageEl = document.getElementById('attendancePercentage');
+  const pointsEl = document.getElementById('points');
+  const competitionsCountEl = document.getElementById('competitionsCount');
+  const initiativesCountEl = document.getElementById('initiativesCount');
+
+  const totalPossibleAttendance = 100;
+
+  async function showUserData(user) {
+    const uid = user.uid;
+    try {
+      const userDoc = await db.collection("users").doc(uid).get();
+      if (!userDoc.exists) {
+        loginStatus.textContent = "لا توجد بيانات للمستخدم.";
+        return;
+      }
+      const data = userDoc.data();
+      totalAttendanceEl.textContent = data.totalAttendance || 0;
+      pointsEl.textContent = data.points || 0;
+      competitionsCountEl.textContent = data.competitionsCount || 0;
+      initiativesCountEl.textContent = data.initiativesCount || 0;
+      const percentage = ((data.totalAttendance || 0) / totalPossibleAttendance) * 100;
+      attendancePercentageEl.textContent = percentage.toFixed(2) + "%";
+
+      userDataDiv.style.display = "block";
+      document.getElementById('login-section').style.display = 'none';
+    } catch(error) { console.error(error); }
+  }
+
+  auth.onAuthStateChanged(user => {
+    if (user) { showUserData(user); } 
+    else { document.getElementById('login-section').style.display = 'block'; userDataDiv.style.display = 'none'; }
+  });
+
+  loginBtn.addEventListener('click', async () => {
+    const email = emailInput.value;
+    const password = passwordInput.value;
+    loginStatus.textContent = "";
+    try {
+      const userCredential = await auth.signInWithEmailAndPassword(email, password);
+      showUserData(userCredential.user);
+    } catch(error) { loginStatus.textContent = "خطأ في تسجيل الدخول: " + error.message; }
+  });
+
+  logoutBtn.addEventListener('click', () => { auth.signOut(); });
+</script>
+
+</body>
+</html>
